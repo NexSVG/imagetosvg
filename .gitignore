@@ -41,7 +41,6 @@ Thumbs.db
 output.svg
 test_image.png
 comparison.png
-starvector-1b-im2svg/
 
 # Virtual Environment
 venv/ 

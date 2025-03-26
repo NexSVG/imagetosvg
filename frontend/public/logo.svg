@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="200" fill="#1a1a2e"/>
+  
+  <!-- Vector Grid Elements -->
+  <g transform="translate(200, 200)">
+    <!-- Grid Lines (Light) -->
+    <g stroke="#373760" stroke-width="1.5">
+      <line x1="-100" y1="-100" x2="100" y2="100" />
+      <line x1="100" y1="-100" x2="-100" y2="100" />
+      <line x1="0" y1="-140" x2="0" y2="140" />
+      <line x1="-140" y1="0" x2="140" y2="0" />
+    </g>
+    
+    <!-- Main Hexagon Shape -->
+    <g stroke="#4361ee" stroke-width="6" fill="none">
+      <path d="M0,-90 L78,-45 L78,45 L0,90 L-78,45 L-78,-45 Z" />
+    </g>
+    
+    <!-- Inner Connections -->
+    <g stroke="#4361ee" stroke-width="3" fill="none">
+      <line x1="-78" y1="-45" x2="78" y2="45" />
+      <line x1="78" y1="-45" x2="-78" y2="45" />
+      <line x1="0" y1="-90" x2="0" y2="90" />
+    </g>
+    
+    <!-- Vector Points -->
+    <g fill="#ff6b6b">
+      <circle cx="0" cy="-90" r="9" />
+      <circle cx="78" cy="-45" r="9" />
+      <circle cx="78" cy="45" r="9" />
+      <circle cx="0" cy="90" r="9" />
+      <circle cx="-78" cy="45" r="9" />
+      <circle cx="-78" cy="-45" r="9" />
+      <circle cx="0" cy="0" r="12" />
+    </g>
+  </g>
+</svg> 

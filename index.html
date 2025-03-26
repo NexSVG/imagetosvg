@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NexSVG - Transform Images to SVG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #ccc;
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover {
+            border-color: #3b82f6;
+        }
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <main class="min-h-screen p-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold text-center mb-8">
+                <span class="block text-gray-900">Transform Your Images</span>
+                <span class="block text-blue-600">Into Scalable SVGs</span>
+            </h1>
+            
+            <div class="drop-zone p-12 bg-white rounded-lg shadow-sm text-center">
+                <input type="file" id="fileInput" class="hidden" accept="image/*" multiple>
+                <button onclick="document.getElementById('fileInput').click()" 
+                        class="mb-4 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                    Choose Files
+                </button>
+                <p class="text-gray-500">or drag and drop your images here</p>
+            </div>
+
+            <div id="preview" class="mt-8 grid grid-cols-2 gap-4"></div>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.querySelector('.drop-zone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+
+        // Handle drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-600');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-600');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-600');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+
+        async function convertToSVG(fileData, container) {
+            const button = container.querySelector('button');
+            
+            try {
+                button.classList.add('loading');
+                button.textContent = 'Converting...';
+
+                // Convert base64 back to file
+                const response = await fetch(fileData);
+                const blob = await response.blob();
+                const file = new File([blob], 'image.png', { type: 'image/png' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                console.log('Sending request to backend...');
+                const convertResponse = await fetch('http://localhost:8000/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Received response:', convertResponse.status);
+                const contentType = convertResponse.headers.get('content-type');
+                
+                if (!convertResponse.ok) {
+                    const errorData = await convertResponse.json();
+                    throw new Error(errorData.detail || errorData.error || 'Conversion failed');
+                }
+
+                let svgData;
+                if (contentType && contentType.includes('application/json')) {
+                    const jsonResponse = await convertResponse.json();
+                    if (jsonResponse.error) {
+                        throw new Error(jsonResponse.error);
+                    }
+                    svgData = jsonResponse.svg || jsonResponse;
+                } else {
+                    svgData = await convertResponse.text();
+                }
+
+                console.log('Successfully received SVG data');
+                
+                // Create a new div for the SVG preview
+                const svgPreview = document.createElement('div');
+                svgPreview.className = 'mt-4 p-4 bg-gray-50 rounded-lg';
+                svgPreview.innerHTML = `
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">SVG Preview:</h3>
+                    <div class="max-h-48 overflow-auto">
+                        ${svgData}
+                    </div>
+                    <a href="data:image/svg+xml;base64,${btoa(svgData)}" 
+                       download="converted.svg"
+                       class="mt-2 inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+                        Download SVG
+                    </a>
+                `;
+                
+                container.appendChild(svgPreview);
+                button.textContent = 'Converted!';
+                button.disabled = true;
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.add('bg-gray-400');
+
+            } catch (error) {
+                console.error('Conversion error:', error);
+                button.textContent = 'Error';
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.add('bg-red-600');
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = `Error: ${error.message}`;
+                container.appendChild(errorDiv);
+            } finally {
+                button.classList.remove('loading');
+            }
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-white p-4 rounded-lg shadow-sm';
+                        div.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-48 object-contain mb-4">
+                            <p class="text-sm text-gray-500 truncate">${file.name}</p>
+                            <button onclick="convertToSVG('${e.target.result}', this.parentElement)" 
+                                    class="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                                Convert to SVG
+                            </button>
+                        `;
+                        preview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
